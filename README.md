@@ -27,3 +27,16 @@ Please read the comments in the code which are provided for better understanding
 
 
 ![193415791-f6db98d5-1e0f-4468-80ed-3dc4edbfdc5d](https://user-images.githubusercontent.com/99068054/201120931-20c044e1-7737-4246-a369-102b15a32380.png)
+
+# The library used:-
+1.python
+2.numpy
+3.keras
+4.tensorflow
+5.os
+6.matplotlib
+7.sklearn
+8.seaborn
+
+
+

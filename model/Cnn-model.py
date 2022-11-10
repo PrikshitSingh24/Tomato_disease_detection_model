@@ -1,11 +1,17 @@
-import numpy as np
+import numpy as np # linear algebra
+import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+import cv2
 import matplotlib.pyplot as plt
 import seaborn as sns
+import pandas as pd
+import pickle
+import csv
 import matplotlib.image as mpimg
 from sklearn.metrics import confusion_matrix, classification_report
 import tensorflow as tf
+from PIL import Image
 import os
-#os.environ["CUDA_VISIBLE_DEVICES"] = '-1' only use this when running the model on cpu!!
+#os.environ["CUDA_VISIBLE_DEVICES"] = '-1'
 from keras.preprocessing.image import ImageDataGenerator
 from keras.applications import densenet
 from keras.models import Sequential, Model, load_model
@@ -14,14 +20,8 @@ from keras.layers import Activation, Dropout, Flatten, Dense
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint, Callback
 from keras import regularizers
 from keras import backend as K
-img_width, img_height = 224, 224
-nb_train_samples = 8144
-nb_validation_samples = 8041
-epochs = 10
-batch_size = 32
-n_classes = 10
 
-
+K.set_learning_phase(1)
 for dirname, _, filenames in os.walk(r'D:\tomato dataset'):   #train dataset address
     for filename in filenames:
         print(os.path.join(dirname, filename))
@@ -80,7 +80,9 @@ for i, img_path in enumerate(
         next_tomato_bacterial_spot_pix + next_tomato_early_blight_pix + next_tomato_late_blight_pix + next_tomato_leaf_mold_pix + next_tomato_septoria_leaf_spot_pix + next_tomato_spider_mite_pix + next_tomato_target_spot_pix + next_tomato_yellow_leaf_curl_pix + next_tomato_mosaic_virus_pix + next_tomato_healthy_pix):
     # Set up subplot; subplot indices start at 1
     sp = plt.subplot(nrows, ncols, i + 1)
+
     sp.axis('Off')  # Don't show axes (or gridlines)
+
     img = mpimg.imread(img_path)
     plt.imshow(img)
 
@@ -88,9 +90,34 @@ plt.show()
 
 labels=['bacterial_spot','early_blight','late_blight','leaf_mold','septoria_leaf_spot','spider_mite','target_spot','yellow_leaf_curl','mosaic_virus','healthy']
 
-validation_data_dir = 'tomato test set'
+train_data_dir = r'D:\tomato dataset'
+validation_data_dir = r'D:\tomato test set'
+
+img_width, img_height = 224, 224
+nb_train_samples = 8144
+nb_validation_samples = 8041
+epochs = 10
+batch_size = 32
+n_classes = 10
+
+train_datagen = ImageDataGenerator(
+    rescale=1. / 255,
+    shear_range=0.2,
+    zoom_range=0.2,
+    fill_mode = 'constant',
+    cval = 1,
+    rotation_range = 5,
+    width_shift_range=0.2,
+    height_shift_range=0.2,
+    horizontal_flip=True)
 
 test_datagen = ImageDataGenerator(rescale=1. / 255)
+
+train_generator = train_datagen.flow_from_directory(
+    train_data_dir,
+    target_size=(224, 224),
+    batch_size=batch_size,
+    class_mode='categorical')
 
 validation_generator = test_datagen.flow_from_directory(
     validation_data_dir,
@@ -99,8 +126,57 @@ validation_generator = test_datagen.flow_from_directory(
     class_mode='categorical')
 
 
-model =tf.keras.models.load_model('plant_diseases_model.h5')
-model.load_weights(r'C:\Users\com\PycharmProjects\PlantDisease\training\cp-299.ckpt.data-00000-of-00001')
+def build_model():
+    base_model = densenet.DenseNet121(input_shape=(224, 224, 3),
+                                      weights='imagenet',
+                                      pooling='avg')
+    for layer in base_model.layers:
+        layer.trainable = True
+
+    x = base_model.output
+    x = Dense(1000, kernel_regularizer=regularizers.l1_l2(0.01), activity_regularizer=regularizers.l2(0.01))(x)
+    x = Activation('relu')(x)
+    x = Dense(500, kernel_regularizer=regularizers.l1_l2(0.01), activity_regularizer=regularizers.l2(0.01))(x)
+    x = Activation('relu')(x)
+    predictions = Dense(n_classes, activation='softmax')(x)
+    model = Model(inputs=base_model.input, outputs=predictions)
+
+    return model
+
+model = build_model()
+model.compile(loss=tf.keras.losses.CategoricalCrossentropy(), optimizer='adam', metrics=['acc', 'mse'])
+
+early_stop = EarlyStopping(monitor='val_loss', patience=8, verbose=1, min_delta=1e-4)
+reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=4, verbose=1, min_delta=1e-4)
+callbacks_list = [early_stop, reduce_lr]
+
+model_history = model.fit_generator(
+    train_generator,
+    epochs=epochs,
+    validation_data=validation_generator,
+    validation_steps=nb_validation_samples // batch_size,
+    callbacks=callbacks_list)
+
+plt.figure(0)
+plt.plot(model_history.history['acc'], 'r')
+plt.plot(model_history.history['val_acc'], 'g')
+plt.xticks(np.arange(0, 20, 1.0))
+plt.rcParams['figure.figsize'] = (8, 6)
+plt.xlabel("Num of Epochs")
+plt.ylabel("Accuracy")
+plt.title("Training Accuracy vs Validation Accuracy")
+plt.legend(['train', 'validation'])
+
+plt.figure(1)
+plt.plot(model_history.history['loss'], 'r')
+plt.plot(model_history.history['val_loss'], 'g')
+plt.xticks(np.arange(0, 20, 1.0))
+plt.rcParams['figure.figsize'] = (8, 6)
+plt.xlabel("Num of Epochs")
+plt.ylabel("Loss")
+plt.title("Training Loss vs Validation Loss")
+plt.legend(['train', 'validation'])
+plt.show()
 
 pred = model.predict_generator(validation_generator, steps=None, max_queue_size=10, workers=1, use_multiprocessing=False, verbose=1)
 predicted = np.argmax(pred, axis=1)

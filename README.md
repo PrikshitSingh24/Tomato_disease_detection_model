@@ -25,4 +25,5 @@ This open source project is related to the identification of different type of t
 
 Please read the comments in the code which are provided for better understanding of the code. Thank you!!
 
-Desktop Screenshot 2022 10 01 - 20 32 44 57 (2)
+
+![193415791-f6db98d5-1e0f-4468-80ed-3dc4edbfdc5d](https://user-images.githubusercontent.com/99068054/201120931-20c044e1-7737-4246-a369-102b15a32380.png)

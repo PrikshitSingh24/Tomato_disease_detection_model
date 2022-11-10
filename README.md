@@ -30,12 +30,19 @@ Please read the comments in the code which are provided for better understanding
 
 # The library used:-
 1.python
+
 2.numpy
+
 3.keras
+
 4.tensorflow
+
 5.os
+
 6.matplotlib
+
 7.sklearn
+
 8.seaborn
 
 

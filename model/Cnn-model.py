@@ -150,11 +150,12 @@ early_stop = EarlyStopping(monitor='val_loss', patience=8, verbose=1, min_delta=
 reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=4, verbose=1, min_delta=1e-4)
 callbacks_list = [early_stop, reduce_lr]
 
-model_history = model.fit_generator(
+model_history = model.fit(
     train_generator,
+    steps_per_epoch=int(8000/batch_size),
     epochs=epochs,
     validation_data=validation_generator,
-    validation_steps=nb_validation_samples // batch_size,
+    validation_steps=int(2000/batch_size),
     callbacks=callbacks_list)
 
 plt.figure(0)

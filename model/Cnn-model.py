@@ -297,6 +297,6 @@ for i in num:
     Specificity = cm1[0,0]/(cm1[0,0]+cm1[0,1])
     Sensitivity = cm1[1,1]/(cm1[1,0]+cm1[1,1])
     
-print(Accuracy)
-print("This is the specificity",Specificity)
-print("This is the sensitivity",Sensitivity)
+print("the accuracy of the model is: ",Accuracy)
+print("This is the specificity: ",Specificity)
+print("This is the sensitivity: ",Sensitivity)

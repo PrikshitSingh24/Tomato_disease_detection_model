@@ -117,7 +117,7 @@ validation_data_dir = r'E:\ML-PROJECTS\Dataset\tomato test set'
 img_width, img_height = 224, 224
 nb_train_samples = 8144
 nb_validation_samples = 8041
-epochs = 5
+epochs = 7
 batch_size = 12
 n_classes = 10
 
@@ -192,7 +192,7 @@ model_history = model.fit(
     #steps_per_epoch=len(dataset_test)// batch_size,
     validation_data=validation_generator,
     verbose=1,
-    epochs=1,
+    epochs=7,
 )
 # model.build(input_shape=input_shape)
 # def build_model():
